@@ -1,51 +1,38 @@
-import { useState } from 'react';
-import { useEffect } from 'react';
-import type { Todo } from './types/Todo';
+import './App.css';
 import { TodoList } from './components/TodoList';
-
+import { TodoForm } from './components/TodoForm';
+import { useTodos } from './hooks/useTodos';
 
 export function App() {
-  const [todos, setTodos] = useState<Todo[]>([])
-  const [loading, setLoading] = useState(true);
-  const [error, SetError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchTodos() {
-      try{
-        const response = await fetch('https://dummyjson.com/todos?limit=10');
-        if(!response.ok){
-          throw new Error(`Erro na requisição: ${response.status}`)
-        }
-        const data = await response.json();
-        setTodos(data.todos);
-      } catch(error) {
-        SetError(error instanceof Error ? error.message : 'Erro desconhecido')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchTodos()
-  }, [])
-
-  function handleToggle(id: Number){
-    setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
-        todo.id === id ? {...todo, completed: !todo.completed} : todo))
+  const {
+    todos,
+    loading,
+    error,
+    filter,
+    setFilter,
+    handleAdd,
+    handleToggle,
+    handleDelete,
+    handleEdit,
+  } = useTodos();
+  if (loading) {
+    return <p>Carregando tarefas...</p>;
   }
 
-  if(loading){
-    return <p>Carregando tarefas...</p>
-  }
-
-  if(error){
-    return <p>Ocorreu um erro: {error}</p>
+  if (error) {
+    return <p>Ocorreu um erro: {error}</p>;
   }
 
   return (
-    <div>
+    <div className="app">
       <h1>Minha Todo List</h1>
-      <TodoList todos={todos} onToggle={handleToggle}/>
+      <TodoForm onAdd={handleAdd} />
+      <div className="filters">
+        <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Todas</button>
+        <button className={filter === 'active' ? 'active' : ''} onClick={() => setFilter('active')}>Pendentes</button>
+        <button className={filter === 'completed' ? 'active' : ''} onClick={() => setFilter('completed')}>Concluídas</button>
+      </div>
+      <TodoList todos={todos} onToggle={handleToggle} onDelete={handleDelete} onEdit={handleEdit} />
     </div>
   );
 }
